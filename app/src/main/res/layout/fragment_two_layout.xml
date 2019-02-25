@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="400dp"
+    android:background="#077751"
+    tools:context=".FragmentOne">
+
+    <!-- TODO: Update blank fragment layout -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Welcome to Fragment Two"
+        android:textAppearance="?android:textAppearanceLarge"
+        android:layout_gravity="center"
+        android:gravity="center"
+        />
+
+
+
+</FrameLayout>
