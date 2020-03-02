@@ -1,39 +1,45 @@
 package com.condinginflow.saywhat;
-
-import android.app.FragmentManager;
-import android.app.FragmentTransaction;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.os.Build;
 import android.provider.BaseColumns;
-
 import android.support.v7.app.AppCompatActivity;
-import android.support.v4.app.*;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Random;
+
+import static com.condinginflow.saywhat.MiniMaxPlayer.findBestMove;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
     private static final int SIZE = 3;
+    private static final String TAG = "MAIN_ACTIVITY";
+    private static gameLevel mGameLevel = gameLevel.DIFFICULT;
     private sqliteDAO sqliteController;
     private SQLiteDatabase db;
     private ContentValues values;
     private Button[][] Buttons = new Button[SIZE][SIZE];
+    private char board[][]; // For MiniMax Algorithm use
+    private ProgressBar progressBar;
+    private boolean gameOver = false;
     private boolean player1Turn = true; //X begins
     private int countRounds = 0;
     private int player1points;
     private int player2points;
     private TextView textPlayer1, textPlayer2;
     private static Context context;
-    private List listFromDb = new ArrayList<>();
+    private static final String CHANNEL_ID = "9";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,13 +49,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         sqliteController = new sqliteDAO(getAppContext());
         textPlayer1 = findViewById(R.id.text_view_p1);
         textPlayer2 = findViewById(R.id.text_view_p2);
-       // setContentView(R.layout.news_arcticle);
-        // Gets the data repository in write mode
+        progressBar = findViewById(R.id.progressBar);
+        progressBar.setVisibility(View.INVISIBLE);
+        createNotificationChannel(); // Enables this app to notify
         db = sqliteController.getWritableDatabase();
 
         // Create a new map of values, where column names are the keys
         values = new ContentValues();
-
 
         for (int i = 0; i < SIZE; i++) {
             for (int j = 0; j < SIZE; j++) {
@@ -69,42 +75,49 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         });
 
         Button buttonRead = findViewById(R.id.button_read_db);
-        buttonRead.setOnClickListener((v) -> { listFromDb = readFromDb();
-        for (int i = 0; i < listFromDb.size(); i++)
-        Log.d( "row:", listFromDb.get(i).toString() );
+        buttonRead.setOnClickListener((v) -> {
+            android.support.v4.app.FragmentManager fragmentManager = getSupportFragmentManager();
+            android.support.v4.app.FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+            FragmentOne f1 = new FragmentOne();
+            fragmentTransaction.add(R.id.fragment_container, f1);
+            fragmentTransaction.addToBackStack(null);
+            fragmentTransaction.commit();
+        });
 
-        android.support.v4.app.FragmentManager fragmentManager = getSupportFragmentManager();
-        android.support.v4.app.FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-        FragmentOne f1 = new FragmentOne();
-        fragmentTransaction.add(R.id.fragment_container, f1);
-        fragmentTransaction.addToBackStack(null);
-        fragmentTransaction.commit();
-
-        } );
+        if (mGameLevel == gameLevel.DIFFICULT)
+            board = new char[SIZE][SIZE];
     }
 
     @Override
     public void onClick(View v) {
-        if (!((Button) v).getText().toString().equals("")) { // Used button clicked
-            return;
-        } else {
-            if (player1Turn) {
-                ((Button) v).setText(cellState.X.toString());
-            } else if (!player1Turn) {
-                ((Button) v).setText(cellState.O.toString());
+        if (player1Turn) {
+            if (!((Button) v).getText().toString().equals("")) { // Used button clicked
+                return;
+            } else {
+                    ((Button) v).setText(cellState.X.toString());
+                    if (++countRounds < SIZE*SIZE) {
+                        if (checkForWin()) {
+                            player1Wins();
+                            return;
+                        }
+                        opponentPlays();
+                        player1Turn = !player1Turn;
+                    } else {
+                        if (checkForWin())
+                            player1Wins();
+                    }
             }
-        }
+        } else
+            return;
 
         countRounds++;
         if (checkForWin()) {
             if (player1Turn) {
                 player1Wins();
-            } else if (!player1Turn) {
+            } else {
                 player2Wins();
             }
-            // Insert the new row, returning the primary key value of the new row
-            long newRowId = db.insert(sqliteDAO.FeedEntry.TABLE_NAME, null, values);
-            Toast.makeText(this, "New Row Id from SQLITE: " + newRowId, Toast.LENGTH_SHORT).show();
+
         }  else {
                 if (countRounds == SIZE*SIZE)
                     draw();
@@ -145,21 +158,27 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void player1Wins() {
+        gameOver = true;
         player1points++;
         values.put(sqliteDAO.FeedEntry.COLUMN_NAME_TITLE, "Player1");
         values.put(sqliteDAO.FeedEntry.COLUMN_NAME_SUBTITLE, new Date().toString());
         Toast.makeText(this, "Player 1 Won!", Toast.LENGTH_SHORT).show();
         updatePointsText();
         resetBoard();
+        long newRowId = db.insert(sqliteDAO.FeedEntry.TABLE_NAME, null, values);
+      //  Toast.makeText(this, "New Row Id from SQLITE: " + newRowId, Toast.LENGTH_SHORT).show();
     }
 
     private void player2Wins() {
+        gameOver = true;
         player2points++;
         values.put(sqliteDAO.FeedEntry.COLUMN_NAME_TITLE, "Player2");
         values.put(sqliteDAO.FeedEntry.COLUMN_NAME_SUBTITLE, new Date().toString());
         Toast.makeText(this,  "Player 2 Won!", Toast.LENGTH_SHORT).show();
         updatePointsText();
         resetBoard();
+        long newRowId = db.insert(sqliteDAO.FeedEntry.TABLE_NAME, null, values);
+    //    Toast.makeText(this, "New Row Id from SQLITE: " + newRowId, Toast.LENGTH_SHORT).show();
     }
 
     private void draw() {
@@ -180,6 +199,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         countRounds = 0;
         player1Turn = true;
+        gameOver = false;
     }
 
     public static Context getAppContext() {
@@ -213,5 +233,62 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
         cursor.close();
         return itemIds;
+    }
+
+    private void opponentPlays() {
+        if (mGameLevel == gameLevel.EASY) {
+            Random rand = new Random();
+            int x = rand.nextInt(SIZE * SIZE);
+            Log.i(TAG, "Opponent chose cell ID " + x);
+            Button chosenButton = Buttons[x / SIZE][x % SIZE];
+            if (chosenButton.getText().toString().equals(""))
+                chosenButton.setText(cellState.O.toString());
+            else {
+                Log.i(TAG, "Opponent recalculates...");
+                while (!chosenButton.getText().toString().equals("")) {
+                    x = rand.nextInt(SIZE * SIZE);
+                    Log.i(TAG, "Opponent chose cell ID " + x);
+                    chosenButton = Buttons[x / SIZE][x % SIZE];
+                }
+                chosenButton.setText(cellState.O.toString());
+            }
+        } else {
+            // Utilize MiniMax Algorithm
+            board = updateBoard(board);
+            MiniMaxPlayer.Move bestMove = findBestMove(board);
+            Log.i(TAG, "MiniMax calculated move: " + bestMove.row + ", " + bestMove.col);
+            Button chosenButton = Buttons[bestMove.row][bestMove.col];
+            chosenButton.setText(cellState.O.toString());
+
+        }
+
+    }
+
+    private char[][] updateBoard(char[][] board) {
+        for (int i = 0; i < SIZE; i++) {
+            for (int j = 0; j < SIZE; j++) {
+                if (!Buttons[i][j].getText().toString().equals(""))
+                    board[i][j] = Buttons[i][j].getText().toString().charAt(0);
+                else
+                    board[i][j] = ' ';
+            }
+        }
+        return board;
+    }
+
+    private void createNotificationChannel() {
+        // Create the NotificationChannel, but only on API 26+ because
+        // the NotificationChannel class is new and not in the support library
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            CharSequence name = getString(R.string.channel_name);
+            String description = getString(R.string.channel_description);
+            int importance = NotificationManager.IMPORTANCE_DEFAULT;
+            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, name, importance);
+            channel.setDescription(description);
+            // Register the channel with the system; you can't change the importance
+            // or other notification behaviors after this
+            NotificationManager notificationManager = getSystemService(NotificationManager.class);
+            notificationManager.createNotificationChannel(channel);
+        }
     }
 }

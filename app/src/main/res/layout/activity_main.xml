@@ -35,7 +35,7 @@
             android:layout_height="34dp"
             android:layout_below="@+id/button_reset"
             android:layout_alignParentEnd="true"
-            android:text="Read" />
+            android:text="Records" />
 
         <Button
             android:id="@+id/button_reset"
@@ -45,6 +45,16 @@
             android:layout_alignParentEnd="true"
             android:layout_marginEnd="0dp"
             android:text="Reset" />
+
+        <ProgressBar
+            android:id="@+id/progressBar"
+            style="?android:attr/progressBarStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="57dp"
+            android:layout_marginEnd="79dp"
+            android:layout_toStartOf="@+id/button_reset"
+            android:layout_toEndOf="@+id/text_view_p1" />
 
 
     </RelativeLayout>
