@@ -1,13 +1,16 @@
 package com.condinginflow.saywhat;
 
+import android.util.Log;
+
 public class MiniMaxPlayer {
+    private static final String TAG = "MINIMAX_PALYER";
 
     static class Move
     {
         int row, col;
     };
 
-    static char player = 'x', opponent = 'o';
+    static char player = 'X', opponent = 'O';
 
     // This function returns true if there are moves
 // remaining on the board. It returns false if
@@ -16,25 +19,25 @@ public class MiniMaxPlayer {
     {
         for (int i = 0; i < 3; i++)
             for (int j = 0; j < 3; j++)
-                if (board[i][j] == '_')
+                if (board[i][j] == ' ')
                     return true;
         return false;
     }
 
-    // This is the evaluation function as discussed
-// in the previous article ( http://goo.gl/sJgv68 )
+
     static int evaluate(char b[][])
     {
         // Checking for Rows for X or O victory.
+        // Consider to change evaluation in favor of opponent...
         for (int row = 0; row < 3; row++)
         {
             if (b[row][0] == b[row][1] &&
                     b[row][1] == b[row][2])
             {
                 if (b[row][0] == player)
-                    return +10;
-                else if (b[row][0] == opponent)
                     return -10;
+                else if (b[row][0] == opponent)
+                    return +10;
             }
         }
 
@@ -107,7 +110,7 @@ public class MiniMaxPlayer {
                 for (int j = 0; j < 3; j++)
                 {
                     // Check if cell is empty
-                    if (board[i][j]=='_')
+                    if (board[i][j]== ' ')
                     {
                         // Make the move
                         board[i][j] = player;
@@ -118,7 +121,7 @@ public class MiniMaxPlayer {
                                 depth + 1, !isMax));
 
                         // Undo the move
-                        board[i][j] = '_';
+                        board[i][j] = ' ';
                     }
                 }
             }
@@ -136,7 +139,7 @@ public class MiniMaxPlayer {
                 for (int j = 0; j < 3; j++)
                 {
                     // Check if cell is empty
-                    if (board[i][j] == '_')
+                    if (board[i][j] == ' ')
                     {
                         // Make the move
                         board[i][j] = opponent;
@@ -147,7 +150,7 @@ public class MiniMaxPlayer {
                                 depth + 1, !isMax));
 
                         // Undo the move
-                        board[i][j] = '_';
+                        board[i][j] = ' ';
                     }
                 }
             }
@@ -167,9 +170,9 @@ public class MiniMaxPlayer {
         // Traverse all cells, evaluate minimax function
         // for all empty cells. And return the cell
         // with optimal value.
-        for (int i = 0; i < 3; i++)
+        for (int i = 0; i < MainActivity.SIZE; i++)
         {
-            for (int j = 0; j < 3; j++)
+            for (int j = 0; j < MainActivity.SIZE; j++)
             {
                 // Check if cell is empty
                 if (board[i][j] == ' ')
@@ -197,8 +200,8 @@ public class MiniMaxPlayer {
             }
         }
 
-        System.out.printf("The value of the best Move " +
-                "is : %d\n\n", bestVal);
+        Log.i(TAG, "The value of the best Move " +
+                "is: " + bestVal);
 
         return bestMove;
     }

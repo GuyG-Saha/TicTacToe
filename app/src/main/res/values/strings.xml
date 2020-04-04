@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">sayWhat</string>
+    <string name="app_name">TicTacToe</string>
 
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
@@ -19,4 +19,5 @@
     <string name="channel_name">notifications</string>
     <string name="channel_description">Publish notifications with media player buttons</string>
     <string name="snooze">Snooze</string>
+    <string name="title_activity_welcome">WelcomeActivity</string>
 </resources>

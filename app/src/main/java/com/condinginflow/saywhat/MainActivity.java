@@ -23,7 +23,7 @@ import java.util.Random;
 import static com.condinginflow.saywhat.MiniMaxPlayer.findBestMove;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
-    private static final int SIZE = 3;
+    public static final int SIZE = 3;
     private static final String TAG = "MAIN_ACTIVITY";
     private static gameLevel mGameLevel = gameLevel.DIFFICULT;
     private sqliteDAO sqliteController;

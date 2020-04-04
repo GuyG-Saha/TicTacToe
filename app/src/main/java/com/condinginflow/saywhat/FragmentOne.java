@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.provider.BaseColumns;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -18,11 +19,13 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.EventListener;
 import java.util.List;
 
 
@@ -37,8 +40,7 @@ public class FragmentOne extends Fragment {
     private sqliteDAO sqliteController = new sqliteDAO(getActivity());
     private SQLiteDatabase db;
 
-    // Inflate the layout for this fragment
-    private TextView text;
+    private FloatingActionButton truncateButton;
 
     public FragmentOne() {
         // Required empty public constructor
@@ -49,6 +51,7 @@ public class FragmentOne extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.list_fragment, container, false);
+        truncateButton = (FloatingActionButton) view.findViewById(R.id.truncateFAB);
         myArrayList = new ArrayList<>();
 
         return view;
@@ -63,6 +66,14 @@ public class FragmentOne extends Fragment {
         Log.i(TAG, myArrayList.size() + "");
         ArrayAdapter<String> myArrayAdapter = new ArrayAdapter<String>(getActivity(), android.R.layout.simple_list_item_1, myArrayList);
         myListView.setAdapter(myArrayAdapter);
+
+        truncateButton.setOnClickListener(new View.OnClickListener() {
+
+            public void onClick(View v) {
+                truncateDBTable();
+                Toast.makeText(getContext(), "Records Table Cleaned", Toast.LENGTH_LONG).show();
+            }
+        });
 
         super.onViewCreated(view, savedInstanceState);
     }
